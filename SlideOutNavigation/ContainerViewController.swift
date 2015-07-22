@@ -6,13 +6,16 @@
 //  Copyright (c) 2014 James Frost. All rights reserved.
 //
 
+// How to Create Your Own Slide-Out Navigation Panel in Swift - Ray Wenderlich 
+// http://www.raywenderlich.com/78568/create-slide-out-navigation-panel-swift
+
 import UIKit
 import QuartzCore
 
 enum SlideOutState {
   case BothCollapsed
   case LeftPanelExpanded
-  case RightPanelExpande
+  case RightPanelExpanded
 }
 
 class ContainerViewController: UIViewController {
@@ -27,7 +30,9 @@ class ContainerViewController: UIViewController {
       showShadowForCenterViewController(shouldShowShadow)
     }
   }
+  
   var leftViewController: SidePanelViewController?
+  var rightViewController: SidePanelViewController?
   let centerPanelExpandedOffset: CGFloat = 60
   
   override func viewDidLoad() {
@@ -67,7 +72,11 @@ extension ContainerViewController:CenterViewControllerDelegate{
   }
   
   func toggleRightPanel() {
-    
+    let notAlreadyExpanded = (currentState != .RightPanelExpanded)
+    if notAlreadyExpanded {
+      addRightPanelViewController()
+    }
+    animateRightPanel(shouldExpand: notAlreadyExpanded)
   }
   
   private func addLeftPanelViewController(){
@@ -77,7 +86,16 @@ extension ContainerViewController:CenterViewControllerDelegate{
       
       addChildSidePanelController(leftViewController!)
     }
-    
+  }
+  
+  
+  private func addRightPanelViewController(){
+    if rightViewController == nil {
+      rightViewController = UIStoryboard.rightViewController()
+      rightViewController!.animals = Animal.allDogs()
+      
+      addChildSidePanelController(rightViewController!)
+    }
   }
   
   private func addChildSidePanelController(sidePanelViewController: SidePanelViewController){
@@ -86,11 +104,8 @@ extension ContainerViewController:CenterViewControllerDelegate{
     sidePanelViewController.didMoveToParentViewController(self)
   }
   
-  
-  func addRightPanelViewController(){
-    
-  }
-  func animateLeftPanel(#shouldExpand:Bool){
+
+  private func animateLeftPanel(#shouldExpand:Bool){
     if shouldExpand {
       // 開く
       currentState = .LeftPanelExpanded
@@ -101,21 +116,33 @@ extension ContainerViewController:CenterViewControllerDelegate{
       // 閉じる
       animateCenterPanelXPosition(targetPosition: 0) {
         finished in
-        debugPrintln("finished:" ,finished)
         self.currentState = .BothCollapsed
         
         self.leftViewController!.view.removeFromSuperview()
         self.leftViewController = nil
       }
-      
     }
-    
-  }
-  func animateRightPanel(#shouldExpand:Bool){
-    
   }
   
-  func animateCenterPanelXPosition(#targetPosition: CGFloat, completion: ((Bool) -> Void)! = nil) {
+  private func animateRightPanel(#shouldExpand:Bool){
+    if shouldExpand {
+      // 開く
+      currentState = .RightPanelExpanded
+      
+      animateCenterPanelXPosition(targetPosition: -CGRectGetWidth(centerNavigationController.view.frame) + centerPanelExpandedOffset)
+    } else {
+      // 閉じる
+      animateCenterPanelXPosition(targetPosition: 0) {
+        finished in
+        self.currentState = .BothCollapsed
+        
+        self.rightViewController!.view.removeFromSuperview()
+        self.rightViewController = nil
+      }
+    }
+  }
+  
+  private func animateCenterPanelXPosition(#targetPosition: CGFloat, completion: ((Bool) -> Void)! = nil) {
     UIView.animateWithDuration(0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: .CurveEaseInOut, animations: {
       self.centerNavigationController.view.frame.origin.x = targetPosition
     }, completion: completion)
