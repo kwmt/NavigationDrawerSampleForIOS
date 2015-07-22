@@ -63,6 +63,17 @@ class ContainerViewController: UIViewController {
 // MARK: CenterViewController delegate
 
 extension ContainerViewController:CenterViewControllerDelegate{
+  func collapseSidePanels() {
+    switch currentState {
+    case .LeftPanelExpanded:
+      toggleLeftPanel()
+    case .RightPanelExpanded:
+      toggleRightPanel()
+    default:
+      break
+    }
+  }
+  
   func toggleLeftPanel() {
     let notAlreadyExpanded = (currentState != .LeftPanelExpanded)
     if notAlreadyExpanded {
@@ -99,6 +110,8 @@ extension ContainerViewController:CenterViewControllerDelegate{
   }
   
   private func addChildSidePanelController(sidePanelViewController: SidePanelViewController){
+    sidePanelViewController.delegate = centerViewController
+    
     view.insertSubview(sidePanelViewController.view, atIndex: 0)
     addChildViewController(sidePanelViewController)
     sidePanelViewController.didMoveToParentViewController(self)
