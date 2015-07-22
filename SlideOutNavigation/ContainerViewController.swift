@@ -47,6 +47,9 @@ class ContainerViewController: UIViewController {
     
     centerNavigationController.didMoveToParentViewController(self)
     
+    let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: "handlePanGesture:")
+    centerNavigationController.view.addGestureRecognizer(panGestureRecognizer)
+    
     
   }
   
@@ -163,7 +166,42 @@ extension ContainerViewController:CenterViewControllerDelegate{
   
 }
 
-
+extension ContainerViewController: UIGestureRecognizerDelegate {
+  func handlePanGesture(recognizer: UIPanGestureRecognizer){
+    debugPrintln("handlePanGesture is called" , recognizer.velocityInView(view).x)
+    
+    // 左から右にドラッグしているか
+    let gestureIsDraggingFromLeftToRight = recognizer.velocityInView(view).x > 0
+    debugPrintln("state: \(recognizer.state.rawValue)")
+    switch recognizer.state {
+    case .Began:
+      if currentState == .BothCollapsed {
+        // ドロワーが開かれていない時
+        if gestureIsDraggingFromLeftToRight {
+          addLeftPanelViewController()
+        } else {
+          addRightPanelViewController()
+        }
+        showShadowForCenterViewController(true)
+      }
+    case .Changed:
+      recognizer.view!.center.x = recognizer.view!.center.x + recognizer.translationInView(view).x
+       recognizer.setTranslation(CGPointZero, inView: view)
+      debugPrintln("center:\(recognizer.view!.center.x), width:\(view.bounds.size.width)")
+    case .Ended:
+      if let leftViewController = leftViewController {
+        let hasMovedGreaterThanHalfwaby = recognizer.view!.center.x > view.bounds.size.width
+        animateLeftPanel(shouldExpand: hasMovedGreaterThanHalfwaby)
+      } else if let rightViewController = rightViewController {
+        let hasMovedGreaterThanHalfwaby = recognizer.view!.center.x < 0
+        animateRightPanel(shouldExpand: hasMovedGreaterThanHalfwaby)
+      }
+    default:
+      break
+    }
+    
+  }
+}
 
 private extension UIStoryboard {
   class func mainStoryboard() -> UIStoryboard { return UIStoryboard(name: "Main", bundle: NSBundle.mainBundle()) }
